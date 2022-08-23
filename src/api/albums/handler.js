@@ -7,6 +7,7 @@ class AlbumsHandler {
 
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this)
     this.postAlbumHandler = this.postAlbumHandler.bind(this)
+    this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this)
   }
 
   async postAlbumHandler(request, h) {
@@ -65,11 +66,45 @@ class AlbumsHandler {
       }
 
       const response = h.response({
-        status: 'fail',
+        status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami',
       })
       response.code(500)
       console.error(error)
+
+      return response
+    }
+  }
+
+  async putAlbumByIdHandler(request, h) {
+    try {
+      const { id } = request.params
+      this._validator.validateAlbumPayload(request.payload)
+
+      await this._service.editAlbumById(id, request.payload)
+
+      return {
+        status: 'success',
+        message: 'Album berhasil diperbarui',
+      }
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        })
+        response.code(error.statusCode)
+
+        return response
+      }
+
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami',
+      })
+      response.code(500)
+      console.error(error)
+
       return response
     }
   }
