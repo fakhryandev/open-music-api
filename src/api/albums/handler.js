@@ -4,9 +4,11 @@ class AlbumsHandler {
   constructor(service, validator) {
     this._service = service
     this._validator = validator
+
+    this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this)
   }
 
-  async getAlbumByIdHandler(request) {
+  async getAlbumByIdHandler(request, h) {
     try {
       const { id } = request.params
       const album = await this._service.getAlbumById(id)
