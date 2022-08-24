@@ -1,9 +1,10 @@
 const ClientError = require('../../exceptions/ClientError')
 
 class AlbumsHandler {
-  constructor(service, validator) {
+  constructor(service, songsService, validator) {
     this._service = service
     this._validator = validator
+    this._songsService = songsService
 
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this)
     this.postAlbumHandler = this.postAlbumHandler.bind(this)
@@ -54,6 +55,7 @@ class AlbumsHandler {
     try {
       const { id } = request.params
       const album = await this._service.getAlbumById(id)
+      const songs = await this._songsService.getSongByAlbumId(album.id)
 
       return {
         status: 'success',
@@ -62,6 +64,7 @@ class AlbumsHandler {
             id: album.id,
             name: album.name,
             year: album.year,
+            songs,
           },
         },
       }

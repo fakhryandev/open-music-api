@@ -3,9 +3,9 @@ const routes = require('./router')
 
 module.exports = {
   name: 'albums',
-  version: '1.0.0',
-  register: async (server, { service, validator }) => {
-    const albumsHandler = new AlbumsHandler(service, validator)
+  version: '1.1.0',
+  register: async (server, { service, songsService, validator }) => {
+    const albumsHandler = new AlbumsHandler(service, songsService, validator)
     server.route(routes(albumsHandler))
   },
 }
