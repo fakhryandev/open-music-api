@@ -7,6 +7,7 @@ class SongsHandler {
 
     this.postSongHandler = this.postSongHandler.bind(this)
     this.getSongsHandler = this.getSongsHandler.bind(this)
+    this.getSongByIdHandler = this.getSongByIdHandler.bind(this)
   }
 
   async postSongHandler(request, h) {
@@ -52,7 +53,7 @@ class SongsHandler {
       }
 
       const response = h.response({
-        status: 'fail',
+        status: 'error',
         message: 'Maaf, terjadi kegagaln pada server kami.',
       })
       response.code(500)
@@ -70,6 +71,39 @@ class SongsHandler {
       data: {
         songs,
       },
+    }
+  }
+
+  async getSongByIdHandler(request, h) {
+    try {
+      const { id } = request.params
+      const song = await this._service.getSongById(id)
+
+      return {
+        status: 'success',
+        data: {
+          song,
+        },
+      }
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        })
+        response.code(error.statusCode)
+
+        return response
+      }
+
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami',
+      })
+      response.code(500)
+      console.error(error)
+
+      return response
     }
   }
 }

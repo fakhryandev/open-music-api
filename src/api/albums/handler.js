@@ -40,7 +40,7 @@ class AlbumsHandler {
       }
 
       const response = h.response({
-        status: 'fail',
+        status: 'error',
         message: 'Maaf, terjadi kegagaln pada server kami.',
       })
       response.code(500)
