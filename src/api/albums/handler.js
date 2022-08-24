@@ -38,6 +38,15 @@ class AlbumsHandler {
 
         return response
       }
+
+      const response = h.response({
+        status: 'fail',
+        message: 'Maaf, terjadi kegagaln pada server kami.',
+      })
+      response.code(500)
+      console.error(error)
+
+      return response
     }
   }
 
