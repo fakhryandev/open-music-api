@@ -1,11 +1,12 @@
 const { nanoid } = require('nanoid')
 const { Pool } = require('pg')
-const InvariantError = require('../exceptions/InvariantError')
-const NotFoundError = require('../exceptions/NotFoundError')
+const InvariantError = require('../../exceptions/InvariantError')
+const NotFoundError = require('../../exceptions/NotFoundError')
 
 class SongsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool()
+    this._cacheService = cacheService
   }
 
   async addSong({ title, year, genre, performer, duration, albumId }) {
@@ -70,9 +71,11 @@ class SongsService {
 
     const result = await this._pool.query(query)
 
-    return result.rows.map(({ id, title, performer }) => {
-      id, title, performer
-    })
+    return result.rows.map(({ id, title, performer }) => ({
+      id,
+      title,
+      performer,
+    }))
   }
 
   async editSongById(id, { title, year, genre, performer, duration, albumId }) {

@@ -16,7 +16,6 @@ const AuthenticationValidator = {
 
   validatePutAuthenticationPayload: (payload) => {
     const validationResult = PutAuthenticationSchema.validate(payload)
-
     if (validationResult.error) {
       throw new InvariantError(validationResult.error.message)
     }
@@ -32,3 +31,4 @@ const AuthenticationValidator = {
 }
 
 module.exports = AuthenticationValidator
+
