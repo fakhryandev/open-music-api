@@ -11,6 +11,7 @@ class PlaylistsHandler {
     this.deletePlaylistHandler = this.deletePlaylistHandler.bind(this)
     this.postSongPlaylistHandler = this.postSongPlaylistHandler.bind(this)
     this.getSongPlaylistHandler = this.getSongPlaylistHandler.bind(this)
+    this.deleteSongPlaylistHandler = this.deleteSongPlaylistHandler.bind(this)
   }
 
   async postPlaylistHandler(request, h) {
@@ -187,6 +188,43 @@ class PlaylistsHandler {
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
+      })
+      response.code(500)
+      console.error(error)
+
+      return response
+    }
+  }
+
+  async deleteSongPlaylistHandler(request, h) {
+    try {
+      const { id: playlistId } = request.params
+      const { id: credentialId } = request.auth.credentials
+      this._validator.validatePlaylistSongPayload(request.payload)
+
+      const { songId } = request.payload
+
+      await this._service.verifyPlaylistOwner(playlistId, credentialId)
+      await this._service.deletePlaylistSong({ playlistId, songId })
+
+      return {
+        status: 'success',
+        message: 'Song pada playlist berhasil dihapus',
+      }
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        })
+        response.code(error.statusCode)
+
+        return response
+      }
+
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami',
       })
       response.code(500)
       console.error(error)

@@ -93,6 +93,21 @@ class PlaylistsService {
     }))
   }
 
+  async deletePlaylistSong({ playlistId, songId }) {
+    const query = {
+      text: 'DELETE FROM playlist_songs WHERE playlist_id=$1 AND song_id=$2 RETURNING id',
+      values: [playlistId, songId],
+    }
+
+    const result = await this._pool.query(query)
+
+    if (!result.rows.length) {
+      throw new NotFoundError(
+        'Song pada playlist gagal dihapus. songId tidak ditemukan'
+      )
+    }
+  }
+
   async verifyPlaylistOwner(id, owner) {
     const query = {
       text: 'SELECT * FROM playlists WHERE id=$1',
