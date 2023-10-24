@@ -4,9 +4,8 @@ const InvariantError = require('../../exceptions/InvariantError')
 const NotFoundError = require('../../exceptions/NotFoundError')
 
 class SongsService {
-  constructor(cacheService) {
+  constructor() {
     this._pool = new Pool()
-    this._cacheService = cacheService
   }
 
   async addSong({ title, year, genre, performer, duration, albumId }) {

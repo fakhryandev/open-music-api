@@ -4,9 +4,8 @@ const InvariantError = require('../../exceptions/InvariantError')
 const NotFoundError = require('../../exceptions/NotFoundError')
 
 class AlbumsService {
-  constructor(cacheService) {
+  constructor() {
     this._pool = new Pool()
-    this._cacheService = cacheService
   }
 
   async addAlbum({ name, year }) {
@@ -24,30 +23,22 @@ class AlbumsService {
       throw new InvariantError('Album gagal ditambahkan')
     }
 
-    await this._cacheService.delete(`album:${id}`)
     return result.rows[0].id
   }
 
   async getAlbumById(albumId) {
-    try {
-      const result = await this._cacheService.get(`album:${albumId}`)
-      return JSON.parse(result)
-    } catch (error) {
-      const query = {
-        text: 'SELECT * FROM albums WHERE id=$1',
-        values: [albumId],
-      }
-
-      const result = await this._pool.query(query)
-
-      if (!result.rows.length) {
-        throw new NotFoundError('Album tidak ditemukan')
-      }
-
-      await this._cacheService.set(`album:${albumId}`, JSON.stringify(result))
-
-      return result.rows.map(({ id, name, year }) => ({ id, name, year }))[0]
+    const query = {
+      text: 'SELECT * FROM albums WHERE id=$1',
+      values: [albumId],
     }
+
+    const result = await this._pool.query(query)
+
+    if (!result.rows.length) {
+      throw new NotFoundError('Album tidak ditemukan')
+    }
+
+    return result.rows.map(({ id, name, year }) => ({ id, name, year }))[0]
   }
 
   async editAlbumById(id, { name, year }) {
@@ -62,7 +53,6 @@ class AlbumsService {
     if (!result.rows.length) {
       throw new NotFoundError('Album tidak ditemukan')
     }
-    await this._cacheService.delete(`album:${id}`)
   }
 
   async deleteAlbumById(id) {
@@ -76,7 +66,6 @@ class AlbumsService {
     if (!result.rows.length) {
       throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan')
     }
-    await this._cacheService.delete(`album:${id}`)
   }
 }
 
