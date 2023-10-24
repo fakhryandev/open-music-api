@@ -74,6 +74,25 @@ class PlaylistsService {
     return result.rows[0].id
   }
 
+  async getPlaylistById({ playlistId }) {
+    const query = {
+      text: `SELECT a.song_id, b.id, b.name, c.username FROM playlist_songs a
+              JOIN playlists b ON a.playlist_id = b.id
+              JOIN users c ON b.owner = c.id
+              WHERE b.id = $1`,
+      values: [playlistId],
+    }
+
+    const result = await this._pool.query(query)
+
+    return result.rows.map(({ song_id: songId, id, name, username }) => ({
+      songId,
+      id,
+      name,
+      username,
+    }))
+  }
+
   async verifyPlaylistOwner(id, owner) {
     const query = {
       text: 'SELECT * FROM playlists WHERE id=$1',

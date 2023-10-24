@@ -108,8 +108,8 @@ class PlaylistsHandler {
       const { id: credentialId } = request.auth.credentials
 
       this._validator.validatePlaylistSongPayload(request.payload)
-      await this._service.verifyPlaylistOwner(playlistId, credentialId)
       await this._songsService.getSongById(songId)
+      await this._service.verifyPlaylistOwner(playlistId, credentialId)
       const playslistSongId = await this._service.addSongPlaylist({
         playlistId,
         songId,
@@ -138,6 +138,55 @@ class PlaylistsHandler {
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami',
+      })
+      response.code(500)
+      console.error(error)
+
+      return response
+    }
+  }
+
+  async getSongPlaylistHandler(request, h) {
+    try {
+      const { id: playlistId } = request.params
+      const { id: credentialId } = request.auth.credentials
+      await this._service.verifyPlaylistOwner(playlistId, credentialId)
+      const playlist = await this._service.getPlaylistById({ playlistId })
+
+      const songs = (
+        await Promise.all(
+          playlist.map(async (item) =>
+            this._songsService.getSongById(item.songId)
+          )
+        )
+      ).map(({ id, title, performer }) => ({ id, title, performer }))
+
+      const { id, name, username } = playlist[0]
+
+      return {
+        status: 'success',
+        data: {
+          playlist: {
+            id,
+            name,
+            username,
+            songs,
+          },
+        },
+      }
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        })
+        response.code(error.statusCode)
+        return response
+      }
+
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
       })
       response.code(500)
       console.error(error)
