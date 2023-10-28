@@ -1,6 +1,4 @@
 /* eslint-disable camelcase */
-exports.shorthands = undefined
-
 exports.up = (pgm) => {
   pgm.addConstraint(
     'songs',
@@ -10,6 +8,6 @@ exports.up = (pgm) => {
 }
 
 exports.down = (pgm) => {
-  pgm.dropConstraint('songs', 'fk_songs.albumid_albums.id')
+  pgm.dropConstraint('songs', 'fk_songs.albumid_album.id')
 }
 
