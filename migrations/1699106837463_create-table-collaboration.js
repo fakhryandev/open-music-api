@@ -17,6 +17,14 @@ exports.up = (pgm) => {
       type: 'VARCHAR(50)',
       notNull: true,
     },
+    created_at: {
+      type: 'TEXT',
+      notNull: true,
+    },
+    updated_at: {
+      type: 'TEXT',
+      notNull: true,
+    },
   })
 
   pgm.addConstraint(
