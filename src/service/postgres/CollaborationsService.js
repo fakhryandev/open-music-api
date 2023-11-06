@@ -27,6 +27,19 @@ class CollaborationsService {
     return result.rows[0].id
   }
 
+  async verifyCollaborator(playlisId, userId) {
+    const query = {
+      text: 'SELECT * FROM collaborations WHERE playlist_id = $1 AND user_id = $2',
+      values: [playlisId, userId],
+    }
+
+    const result = await this._pool.query(query)
+
+    if (!result.rows.length) {
+      throw new InvariantError('Kolaborasi gagal diverifikasi')
+    }
+  }
+
   async verifyCollaboratorId(userId) {
     const query = {
       text: 'SELECT * FROM users WHERE id = $1',
