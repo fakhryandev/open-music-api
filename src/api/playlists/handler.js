@@ -120,7 +120,7 @@ class PlaylistsHandler {
 
     const { songId } = request.payload
 
-    await this._service.verifyPlaylistOwner(playlistId, credentialId)
+    await this._service.verifyPlaylistAccess(playlistId, credentialId)
     await this._service.deletePlaylistSong({ playlistId, songId })
 
     return {
