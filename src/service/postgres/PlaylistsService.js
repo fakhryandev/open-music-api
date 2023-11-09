@@ -30,7 +30,7 @@ class PlaylistsService {
 
   async getPlaylists(owner) {
     const query = {
-      text: `SELECT * FROM playlists a 
+      text: `SELECT a.id, c.fullname, c.username FROM playlists a 
               LEFT JOIN collaborations b ON a.id = b.playlist_id
               JOIN users c ON a.owner = c.id
               WHERE a.owner=$1 OR b.user_id = $1`,
@@ -39,7 +39,7 @@ class PlaylistsService {
 
     const result = await this._pool.query(query)
 
-    return result.rows.map(({ id, name, username }) => ({
+    return result.rows.map(({ id, fullname: name, username }) => ({
       id,
       name,
       username,
