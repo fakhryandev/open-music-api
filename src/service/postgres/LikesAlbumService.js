@@ -3,9 +3,10 @@ const { Pool } = require('pg')
 const InvariantError = require('../../exceptions/InvariantError')
 const NotFoundError = require('../../exceptions/NotFoundError')
 
-class AlbumLikesServices {
-  constructor() {
+class LikesAlbumService {
+  constructor(cacheService) {
     this._pool = new Pool()
+    this._cacheService = cacheService
   }
 
   async checkLikeAlbum({ albumId, userId }) {
@@ -23,19 +24,31 @@ class AlbumLikesServices {
     return result
   }
 
-  async getAlbumLikes({ albumId }) {
-    const query = {
-      text: 'SELECT * FROM user_album_likes WHERE album_id = $1',
-      values: [albumId],
+  async getLikesAlbum({ albumId }) {
+    try {
+      const result = await this._cacheService.get(`user-album-likes:${albumId}`)
+      return [JSON.parse(result), true]
+    } catch (error) {
+      const query = {
+        text: 'SELECT * FROM user_album_likes WHERE album_id = $1',
+        values: [albumId],
+      }
+
+      const result = await this._pool.query(query)
+
+      if (!result.rows.length) {
+        throw new NotFoundError('Album likes tidak ditemukan')
+      }
+
+      const albumLikes = result.rows.length
+
+      await this._cacheService.set(
+        `user-album-likes:${albumId}`,
+        JSON.stringify(albumLikes)
+      )
+
+      return [albumLikes, false]
     }
-
-    const result = await this._pool.query(query)
-
-    if (!result.rows.length) {
-      throw new NotFoundError('Album likes tidak ditemukan')
-    }
-
-    return result.rows
   }
 
   async addLikeAlbum({ albumId, userId }) {
@@ -54,6 +67,8 @@ class AlbumLikesServices {
       throw new InvariantError('Album likes gagal ditambahkan')
     }
 
+    await this._cacheService.delete(`user-album-likes:${albumId}`)
+
     return result.rows[0].id
   }
 
@@ -70,8 +85,10 @@ class AlbumLikesServices {
         'Album likes gagal dihapus. albumId tidak ditemukan'
       )
     }
+
+    await this._cacheService.delete(`user-album-likes:${albumId}`)
   }
 }
 
-module.exports = AlbumLikesServices
+module.exports = LikesAlbumService
 

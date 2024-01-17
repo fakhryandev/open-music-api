@@ -3,22 +3,30 @@ class AlbumLikesHandler {
     this._service = service
     this._albumsService = albumsService
 
-    this.getAlbumLikes = this.getAlbumLikes.bind(this)
+    this.getLikesAlbum = this.getLikesAlbum.bind(this)
     this.addAlbumLikes = this.addAlbumLikes.bind(this)
     this.deleteAlbumLikes = this.deleteAlbumLikes.bind(this)
   }
 
-  async getAlbumLikes(request) {
+  async getLikesAlbum(request, h) {
     const { id } = request.params
 
-    const album = await this._service.getAlbumLikes({ albumId: id })
+    const [albumLikes, cache] = await this._service.getLikesAlbum({
+      albumId: id,
+    })
 
-    return {
+    const response = h.response({
       status: 'success',
       data: {
-        likes: album.length,
+        likes: albumLikes,
       },
+    })
+
+    if (cache) {
+      response.header('X-Data-Source', 'cache')
     }
+
+    return response
   }
 
   async addAlbumLikes(request, h) {

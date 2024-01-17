@@ -27,8 +27,10 @@ const CollaborationsValidator = require('./validator/collaborations')
 const activities = require('./api/activities')
 const PlaylistActivitiesService = require('./service/postgres/ActivitiesService')
 
-const albumLikes = require('./api/albumlikes')
-const AlbumLikesServices = require('./service/postgres/AlbumLikesService')
+const albumLikes = require('./api/likesalbum')
+const LikesAlbumService = require('./service/postgres/LikesAlbumService')
+
+const CacheService = require('./service/redis/CacheService')
 
 const TokenManager = require('./tokenize/TokenManager')
 const AuthenticationsValidator = require('./validator/authentications')
@@ -37,6 +39,7 @@ const ClientError = require('./exceptions/ClientError')
 require('dotenv').config()
 
 const init = async () => {
+  const cacheService = new CacheService()
   const albumsService = new AlbumsService()
   const songsService = new SongsService()
   const usersService = new UsersService()
@@ -44,7 +47,7 @@ const init = async () => {
   const playlistActivitiesService = new PlaylistActivitiesService()
   const playlistsService = new PlaylistsService(collaborationsService)
   const authenticationsService = new AuthenticationsService()
-  const albumLikesService = new AlbumLikesServices()
+  const likesAlbumService = new LikesAlbumService(cacheService)
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -166,7 +169,7 @@ const init = async () => {
     {
       plugin: albumLikes,
       options: {
-        service: albumLikesService,
+        service: likesAlbumService,
         albumsService,
       },
     },
