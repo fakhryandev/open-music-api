@@ -38,7 +38,12 @@ class AlbumsService {
       throw new NotFoundError('Album tidak ditemukan')
     }
 
-    return result.rows.map(({ id, name, year }) => ({ id, name, year }))[0]
+    return result.rows.map(({ id, name, year, cover }) => ({
+      id,
+      name,
+      year,
+      cover,
+    }))[0]
   }
 
   async editAlbumById(id, { name, year }) {
