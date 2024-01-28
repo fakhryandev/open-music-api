@@ -1,13 +1,16 @@
 class AlbumsHandler {
-  constructor(service, songsService, validator) {
+  constructor(service, songsService, storageService, validator) {
     this._service = service
     this._validator = validator
     this._songsService = songsService
+    this._storageService = storageService
 
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this)
     this.postAlbumHandler = this.postAlbumHandler.bind(this)
     this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this)
     this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this)
+
+    this.postAlbumCoverByIdHandler = this.postAlbumCoverByIdHandler.bind(this)
   }
 
   async postAlbumHandler(request, h) {
@@ -32,7 +35,6 @@ class AlbumsHandler {
     const { id } = request.params
     const album = await this._service.getAlbumById(id)
     const songs = await this._songsService.getSongByAlbumId(album.id)
-
     return {
       status: 'success',
       data: {
@@ -67,6 +69,22 @@ class AlbumsHandler {
       status: 'success',
       message: 'Album berhasil dihapus',
     }
+  }
+
+  async postAlbumCoverByIdHandler(request, h) {
+    const { id } = request.params
+    const { cover } = request.payload
+    this._validator.validateImageHeaders(cover.hapi.headers)
+
+    const filename = await this._storageService.writeFile(cover, cover.hapi)
+    await this._service.addCoverAlbumById(id, filename)
+
+    const response = h.response({
+      status: 'success',
+      message: 'Cover Upload Successfully.',
+    })
+    response.code(201)
+    return response
   }
 }
 

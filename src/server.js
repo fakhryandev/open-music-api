@@ -1,5 +1,7 @@
 const Hapi = require('@hapi/hapi')
 const Jwt = require('@hapi/jwt')
+const Inert = require('@hapi/inert')
+const path = require('path')
 
 const albums = require('./api/albums')
 const AlbumsService = require('./service/postgres/AlbumsService')
@@ -31,6 +33,7 @@ const albumLikes = require('./api/likesalbum')
 const LikesAlbumService = require('./service/postgres/LikesAlbumService')
 
 const CacheService = require('./service/redis/CacheService')
+const StorageService = require('./service/storage/StorageService')
 
 const TokenManager = require('./tokenize/TokenManager')
 const AuthenticationsValidator = require('./validator/authentications')
@@ -48,6 +51,9 @@ const init = async () => {
   const playlistsService = new PlaylistsService(collaborationsService)
   const authenticationsService = new AuthenticationsService()
   const likesAlbumService = new LikesAlbumService(cacheService)
+  const storageService = new StorageService(
+    path.resolve(__dirname, 'api/albums/file/images')
+  )
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -92,6 +98,9 @@ const init = async () => {
     {
       plugin: Jwt,
     },
+    {
+      plugin: Inert,
+    },
   ])
 
   server.auth.strategy('openmusic_jwt', 'jwt', {
@@ -116,6 +125,7 @@ const init = async () => {
       options: {
         service: albumsService,
         songsService,
+        storageService,
         validator: AlbumsValidator,
       },
     },
