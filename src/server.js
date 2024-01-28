@@ -29,7 +29,6 @@ const CollaborationsValidator = require('./validator/collaborations')
 const activities = require('./api/activities')
 const PlaylistActivitiesService = require('./service/postgres/ActivitiesService')
 
-const albumLikes = require('./api/likesalbum')
 const LikesAlbumService = require('./service/postgres/LikesAlbumService')
 
 const CacheService = require('./service/redis/CacheService')
@@ -126,6 +125,7 @@ const init = async () => {
         service: albumsService,
         songsService,
         storageService,
+        likesAlbumService,
         validator: AlbumsValidator,
       },
     },
@@ -174,13 +174,6 @@ const init = async () => {
       options: {
         service: playlistActivitiesService,
         playlistsService,
-      },
-    },
-    {
-      plugin: albumLikes,
-      options: {
-        service: likesAlbumService,
-        albumsService,
       },
     },
   ])

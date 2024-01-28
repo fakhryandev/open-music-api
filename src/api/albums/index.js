@@ -3,15 +3,16 @@ const routes = require('./router')
 
 module.exports = {
   name: 'albums',
-  version: '2.1.0',
+  version: '3.1.0',
   register: async (
     server,
-    { service, songsService, storageService, validator }
+    { service, songsService, storageService, likesAlbumService, validator }
   ) => {
     const albumsHandler = new AlbumsHandler(
       service,
       songsService,
       storageService,
+      likesAlbumService,
       validator
     )
     server.route(routes(albumsHandler))

@@ -1,9 +1,10 @@
 class AlbumsHandler {
-  constructor(service, songsService, storageService, validator) {
+  constructor(service, songsService, storageService, likesService, validator) {
     this._service = service
     this._validator = validator
     this._songsService = songsService
     this._storageService = storageService
+    this._likesService = likesService
 
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this)
     this.postAlbumHandler = this.postAlbumHandler.bind(this)
@@ -11,6 +12,10 @@ class AlbumsHandler {
     this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this)
 
     this.postAlbumCoverByIdHandler = this.postAlbumCoverByIdHandler.bind(this)
+
+    this.getLikesAlbum = this.getLikesAlbum.bind(this)
+    this.addAlbumLikes = this.addAlbumLikes.bind(this)
+    this.deleteAlbumLikes = this.deleteAlbumLikes.bind(this)
   }
 
   async postAlbumHandler(request, h) {
@@ -85,6 +90,64 @@ class AlbumsHandler {
     })
     response.code(201)
     return response
+  }
+
+  async getLikesAlbum(request, h) {
+    const { id } = request.params
+
+    const [albumLikes, cache] = await this._likesService.getLikesAlbum({
+      albumId: id,
+    })
+
+    const response = h.response({
+      status: 'success',
+      data: {
+        likes: albumLikes,
+      },
+    })
+
+    if (cache) {
+      response.header('X-Data-Source', 'cache')
+    }
+
+    return response
+  }
+
+  async addAlbumLikes(request, h) {
+    const { id } = request.params
+    const { id: credentialId } = request.auth.credentials
+
+    await this._service.getAlbumById(id)
+
+    await this._likesService.checkLikeAlbum({
+      albumId: id,
+      userId: credentialId,
+    })
+
+    await this._likesService.addLikeAlbum({ albumId: id, userId: credentialId })
+
+    const response = h.response({
+      status: 'success',
+      message: `Sukses menyukai album ${id}`,
+    })
+    response.code(201)
+
+    return response
+  }
+
+  async deleteAlbumLikes(request) {
+    const { id } = request.params
+    const { id: credentialId } = request.auth.credentials
+
+    await this._likesService.deleteLikeAlbum({
+      albumId: id,
+      userId: credentialId,
+    })
+
+    return {
+      status: 'success',
+      message: `Sukses batal menyukai album ${id}`,
+    }
   }
 }
 
