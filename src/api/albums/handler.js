@@ -36,11 +36,14 @@ class AlbumsHandler {
     return response
   }
 
-  async getAlbumByIdHandler(request) {
+  async getAlbumByIdHandler(request, h) {
     const { id } = request.params
-    const album = await this._service.getAlbumById(id)
-    const songs = await this._songsService.getSongByAlbumId(album.id)
-    return {
+    const [album, cache] = await this._service.getAlbumById(id)
+    const [songs, cacheSong] = await this._songsService.getSongByAlbumId(
+      album.id
+    )
+
+    const response = h.response({
       status: 'success',
       data: {
         album: {
@@ -51,7 +54,13 @@ class AlbumsHandler {
           songs,
         },
       },
+    })
+
+    if (cache && cacheSong) {
+      response.header('X-Data-Source', 'cache')
     }
+
+    return response
   }
 
   async putAlbumByIdHandler(request) {

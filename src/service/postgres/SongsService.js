@@ -33,6 +33,7 @@ class SongsService {
     if (!result.rows[0].id) {
       throw new InvariantError('Song gagal ditambahkan')
     }
+    await this._cacheService.delete(`albumSongs:${albumId}`)
 
     return result.rows[0].id
   }
@@ -72,18 +73,31 @@ class SongsService {
   }
 
   async getSongByAlbumId(albumId) {
-    const query = {
-      text: 'SELECT * FROM songs WHERE album_id=$1',
-      values: [albumId],
+    try {
+      const result = await this._cacheService.get(`albumSongs:${albumId}`)
+
+      return [JSON.parse(result), true]
+    } catch (error) {
+      const query = {
+        text: 'SELECT * FROM songs WHERE album_id=$1',
+        values: [albumId],
+      }
+
+      const result = await this._pool.query(query)
+
+      const albumSongs = result.rows.map(({ id, title, performer }) => ({
+        id,
+        title,
+        performer,
+      }))
+
+      await this._cacheService.set(
+        `albumSongs:${albumId}`,
+        JSON.stringify(albumSongs)
+      )
+
+      return [albumSongs, false]
     }
-
-    const result = await this._pool.query(query)
-
-    return result.rows.map(({ id, title, performer }) => ({
-      id,
-      title,
-      performer,
-    }))
   }
 
   async editSongById(id, { title, year, genre, performer, duration, albumId }) {

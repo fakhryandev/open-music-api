@@ -4,8 +4,9 @@ const InvariantError = require('../../exceptions/InvariantError')
 const NotFoundError = require('../../exceptions/NotFoundError')
 
 class AlbumsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool()
+    this._cacheService = cacheService
   }
 
   async addAlbum({ name, year }) {
@@ -27,23 +28,33 @@ class AlbumsService {
   }
 
   async getAlbumById(albumId) {
-    const query = {
-      text: 'SELECT * FROM albums WHERE id=$1',
-      values: [albumId],
+    try {
+      const result = await this._cacheService.get(`album:${albumId}`)
+
+      return [JSON.parse(result), true]
+    } catch (error) {
+      const query = {
+        text: 'SELECT * FROM albums WHERE id=$1',
+        values: [albumId],
+      }
+
+      const result = await this._pool.query(query)
+
+      if (!result.rows.length) {
+        throw new NotFoundError('Album tidak ditemukan')
+      }
+
+      const album = result.rows.map(({ id, name, year, cover }) => ({
+        id,
+        name,
+        year,
+        cover,
+      }))[0]
+
+      await this._cacheService.set(`album:${albumId}`, JSON.stringify(album))
+
+      return [album, false]
     }
-
-    const result = await this._pool.query(query)
-
-    if (!result.rows.length) {
-      throw new NotFoundError('Album tidak ditemukan')
-    }
-
-    return result.rows.map(({ id, name, year, cover }) => ({
-      id,
-      name,
-      year,
-      cover,
-    }))[0]
   }
 
   async editAlbumById(id, { name, year }) {
@@ -58,6 +69,8 @@ class AlbumsService {
     if (!result.rows.length) {
       throw new NotFoundError('Album tidak ditemukan')
     }
+
+    await this._cacheService.delete(`album:${result.rows[0].id}`)
   }
 
   async deleteAlbumById(id) {
@@ -71,6 +84,8 @@ class AlbumsService {
     if (!result.rows.length) {
       throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan')
     }
+
+    await this._cacheService.delete(`album:${result.rows[0].id}`)
   }
 
   async addCoverAlbumById(id, coverUrl) {
@@ -84,6 +99,8 @@ class AlbumsService {
     if (!result.rows.length) {
       throw new NotFoundError('Album tidak ditemukan')
     }
+
+    await this._cacheService.delete(`album:${result.rows[0].id}`)
   }
 }
 
