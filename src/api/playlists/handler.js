@@ -99,33 +99,54 @@ class PlaylistsHandler {
     return response
   }
 
-  async getSongPlaylistHandler(request) {
+  async getSongPlaylistHandler(request, h) {
     const { id: playlistId } = request.params
     const { id: credentialId } = request.auth.credentials
     await this._service.verifyPlaylistAccess(playlistId, credentialId)
-    const playlist = await this._service.getPlaylistById({ playlistId })
+    const [playlist, cache] = await this._service.getPlaylistById({
+      playlistId,
+    })
 
-    const songs = (
-      await Promise.all(
-        playlist.map(async (item) =>
-          this._songsService.getSongById(item.songId)
+    const songs = await Promise.all(
+      playlist.map(async (item) => {
+        const [songData, songCache] = await this._songsService.getSongById(
+          item.songId
         )
-      )
-    ).map(({ id, title, performer }) => ({ id, title, performer }))
+        return {
+          id: songData.id,
+          title: songData.title,
+          performer: songData.performer,
+          songCache,
+        }
+      })
+    )
 
+    const songsMapped = songs.map(({ id, title, performer }) => ({
+      id,
+      title,
+      performer,
+    }))
     const { id, name, username } = playlist[0]
 
-    return {
+    const response = h.response({
       status: 'success',
       data: {
         playlist: {
           id,
           name,
           username,
-          songs,
+          songs: songsMapped,
         },
       },
+    })
+
+    const songsCached = songs.every((item) => item.songCache)
+
+    if (cache && songsCached) {
+      response.header('X-Data-Source', 'cache')
     }
+
+    return response
   }
 
   async deleteSongPlaylistHandler(request) {

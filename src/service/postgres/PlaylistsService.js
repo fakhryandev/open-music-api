@@ -93,30 +93,46 @@ class PlaylistsService {
       throw new InvariantError('Song gagal ditambahkan pada playlist')
     }
 
+    await this._cacheService.delete(`playlist:${playlistId}`)
     return result.rows[0].id
   }
 
   async getPlaylistById({ playlistId }) {
-    const query = {
-      text: `SELECT a.song_id, b.id, b.name, c.username FROM playlist_songs a
-              JOIN playlists b ON a.playlist_id = b.id
-              JOIN users c ON b.owner = c.id
-              WHERE b.id = $1`,
-      values: [playlistId],
+    try {
+      const result = await this._cacheService.get(`playlist:${playlistId}`)
+
+      return [JSON.parse(result), true]
+    } catch (error) {
+      const query = {
+        text: `SELECT a.song_id, b.id, b.name, c.username FROM playlist_songs a
+                JOIN playlists b ON a.playlist_id = b.id
+                JOIN users c ON b.owner = c.id
+                WHERE b.id = $1`,
+        values: [playlistId],
+      }
+
+      const result = await this._pool.query(query)
+
+      if (!result.rows.length) {
+        throw new NotFoundError('Playlist tidak ditemukan')
+      }
+
+      const playlist = result.rows.map(
+        ({ song_id: songId, id, name, username }) => ({
+          songId,
+          id,
+          name,
+          username,
+        })
+      )
+
+      await this._cacheService.set(
+        `playlist:${playlistId}`,
+        JSON.stringify(playlist)
+      )
+
+      return [playlist, false]
     }
-
-    const result = await this._pool.query(query)
-
-    if (!result.rows.length) {
-      throw new NotFoundError('Playlist tidak ditemukan')
-    }
-
-    return result.rows.map(({ song_id: songId, id, name, username }) => ({
-      songId,
-      id,
-      name,
-      username,
-    }))
   }
 
   async deletePlaylistSong({ playlistId, songId }) {
@@ -132,6 +148,8 @@ class PlaylistsService {
         'Song pada playlist gagal dihapus. songId tidak ditemukan'
       )
     }
+
+    await this._cacheService.delete(`playlist:${playlistId}`)
   }
 
   async verifyPlaylistOwner(id, owner) {
