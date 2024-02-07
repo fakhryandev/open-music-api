@@ -2,4 +2,6 @@
 
 ## Tips
 If error in testing happen, query this
-`TRUNCATE albums, authentications, collaborations, playlist_song_activities, playlist_songs, playlists, songs, user_album_likes, users;`
+```markdown
+TRUNCATE albums, authentications, collaborations, playlist_song_activities, playlist_songs, playlists, songs, user_album_likes, users;
+```
